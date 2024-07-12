@@ -1,5 +1,10 @@
 import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QStackedWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit
+import database
+
+conn = database.connect_to_db()
+if conn:
+    cursor = conn.cursor()
 
 class LoginWidget(QWidget):
     def __init__(self, switch_func):
@@ -68,8 +73,11 @@ class RegisterWidget(QWidget):
         self.setLayout(layout)
 
     def register(self):
-        print('Registering with:', self.username.text(), self.password.text())
-
+        try:
+            cursor.execute("CALL DodajUzytkownika(%s, %s)", (self.username.text(), self.password.text()))
+        except database.mysql.connector.Error as err:
+            if err.errno == 1062:  # Duplicate entry error code
+                print(f"Błąd: Użytkownik '{self.username.text()}' już istnieje.")
 
 class MainWindow(QMainWindow):
     def __init__(self):
