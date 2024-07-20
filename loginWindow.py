@@ -1,5 +1,7 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QStackedWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit
+from listWindow import ListWindow
+import mysql
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QStackedWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QMessageBox
 import database
 
 conn = database.connect_to_db()
@@ -38,8 +40,15 @@ class LoginWidget(QWidget):
         self.setLayout(layout)
 
     def login(self):
-        print('Logging in with:', self.username.text(), self.password.text())
+        try:
+            cursor.execute("SELECT * FROM uzytkownicy WHERE Login = %s AND Haslo = %s", (self.username.text(), self.password.text()))
+            res = cursor.fetchall()
+            if res:
+                self.taskwin = ListWindow(f"{res[0][0]}")
+                self.taskwin.show()
 
+        except mysql.connector.Error as err:
+            print("Login failed!")
 
 class RegisterWidget(QWidget):
     def __init__(self, switch_func):
@@ -62,6 +71,17 @@ class RegisterWidget(QWidget):
         self.password.setEchoMode(QLineEdit.Password)
         layout.addWidget(self.password)
 
+        self.exist = QLabel('Username already in use.')
+        self.exist.setStyleSheet("color: red;")
+        self.exist.setVisible(False)
+        layout.addWidget(self.exist)
+
+        self.win = QMessageBox()
+        self.win.setWindowTitle("Success")
+        self.win.setText("You can log in now!")
+        self.win.setStandardButtons(QMessageBox.Ok)
+        self.win.setGeometry(150, 200, 0, 0)
+
         register_button = QPushButton('Register', self)
         register_button.clicked.connect(self.register)
         layout.addWidget(register_button)
@@ -75,9 +95,13 @@ class RegisterWidget(QWidget):
     def register(self):
         try:
             cursor.execute("CALL DodajUzytkownika(%s, %s)", (self.username.text(), self.password.text()))
+            self.exist.setVisible(False)
+            self.switch_func()
+            self.win.exec()
+
         except database.mysql.connector.Error as err:
             if err.errno == 1062:  # Duplicate entry error code
-                print(f"Błąd: Użytkownik '{self.username.text()}' już istnieje.")
+                self.exist.setVisible(True)
 
 class MainWindow(QMainWindow):
     def __init__(self):

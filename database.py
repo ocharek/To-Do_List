@@ -15,3 +15,10 @@ def connect_to_db():
         print(f"Error: {err}")
         return None
 
+def select_all_tasks(conn, name):
+    cursor = conn.cursor()
+    cursor.execute(f'SELECT * FROM zadania_{name}')
+    tasks = cursor.fetchall()
+    return tasks
+
+#def del_task(conn):
