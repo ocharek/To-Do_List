@@ -21,4 +21,12 @@ def select_all_tasks(conn, name):
     tasks = cursor.fetchall()
     return tasks
 
-#def del_task(conn):
+def add_task(conn, name, t):
+    cursor = conn.cursor()
+    cursor.execute(f'INSERT INTO zadania_{name} (Task, Done) VALUES ("{t}", 0)')
+    conn.commit()
+
+def close_connection(conn):
+    if conn:
+        conn.close()
+
