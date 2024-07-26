@@ -1,4 +1,6 @@
 import sys
+
+import main
 from listWindow import ListWindow
 import mysql
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QStackedWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QMessageBox
@@ -9,9 +11,10 @@ if conn:
     cursor = conn.cursor()
 
 class LoginWidget(QWidget):
-    def __init__(self, switch_func):
+    def __init__(self, switch_func, switch_to_task_func):
         super().__init__()
         self.switch_func = switch_func
+        self.switch_to_task_func = switch_to_task_func
         self.initUI()
 
     def initUI(self):
@@ -44,8 +47,7 @@ class LoginWidget(QWidget):
             cursor.execute("SELECT * FROM uzytkownicy WHERE Login = %s AND Haslo = %s", (self.username.text(), self.password.text()))
             res = cursor.fetchall()
             if res:
-                self.taskwin = ListWindow(f"{res[0][0]}")
-                self.taskwin.show()
+                self.switch_to_task_func(f"{res[0][0]}")
 
         except mysql.connector.Error as err:
             print("Login failed!")
@@ -114,7 +116,7 @@ class MainWindow(QMainWindow):
         self.stacked_widget = QStackedWidget()
         self.setCentralWidget(self.stacked_widget)
 
-        self.login_widget = LoginWidget(self.switch_to_register)
+        self.login_widget = LoginWidget(self.switch_to_register, self.open_task_window)
         self.register_widget = RegisterWidget(self.switch_to_login)
 
         self.stacked_widget.addWidget(self.login_widget)
@@ -127,3 +129,8 @@ class MainWindow(QMainWindow):
 
     def switch_to_login(self):
         self.stacked_widget.setCurrentWidget(self.login_widget)
+
+    def open_task_window(self, user_id):
+        self.task_window = ListWindow(user_id)
+        self.task_window.show()
+        self.close()

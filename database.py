@@ -26,6 +26,15 @@ def add_task(conn, name, t):
     cursor.execute(f'INSERT INTO zadania_{name} (Task, Done) VALUES ("{t}", 0)')
     conn.commit()
 
+def delete_task(conn, task_id, name):
+    cursor = conn.cursor()
+    cursor.execute(f'DELETE FROM zadania_{name} WHERE ZadanieID = %s', (task_id,))
+    conn.commit()
+
+def check_task(conn, task_id, state, name):
+    cursor = conn.cursor()
+    cursor.execute(f'UPDATE zadania_{name} SET Done = {state} WHERE ZadanieID = %s', (task_id,))
+    conn.commit()
 def close_connection(conn):
     if conn:
         conn.close()
